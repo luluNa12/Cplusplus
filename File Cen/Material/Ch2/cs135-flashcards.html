@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CS135 Flashcards — Your First C++ Program</title>
+<style>
+  /* ============================================================
+     DESIGN TOKENS
+     Canvas: cool paper gray-blue · Surface: white
+     Ink: near-navy text · Indigo: primary accent
+     Teal: "answer side" wash · Green: studied confirmation
+     ============================================================ */
+  :root {
+    --canvas: #EEF1F7;
+    --surface: #FFFFFF;
+    --surface-back: #F2FAF8;
+    --ink: #161B33;
+    --ink-soft: #454B68;
+    --line: #C9D0E0;
+    --indigo: #3B3FCF;
+    --indigo-dark: #2A2DA0;
+    --teal: #0E8F82;
+    --teal-dark: #0B6E64;
+    --green: #1F7A4D;
+    --green-bg: #E4F5EC;
+    --amber: #8A5A00;
+    --amber-bg: #FCEFD1;
+    --focus: #D6431A;
+    --radius: 14px;
+    --font-display: -apple-system, "Segoe UI", "Segoe UI Semibold", Roboto, Helvetica, Arial, sans-serif;
+    --font-body: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, "Cascadia Code", "Consolas", "SFMono-Regular", Menlo, Monaco, monospace;
+    --dur: 0.5s;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--canvas);
+    background-image:
+      linear-gradient(180deg, rgba(59,63,207,0.06) 0%, rgba(59,63,207,0) 260px);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+
+  .wrap {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 1.25rem 1rem 3rem;
+  }
+
+  /* Skip link */
+  .skip-link {
+    position: absolute;
+    left: 0;
+    top: -3rem;
+    background: var(--indigo);
+    color: #fff;
+    padding: 0.6rem 1rem;
+    border-radius: 0 0 8px 0;
+    z-index: 100;
+    text-decoration: none;
+    font-weight: 600;
+    transition: top 0.2s ease;
+  }
+  .skip-link:focus {
+    top: 0;
+  }
+
+  /* Title bar — a nod to an editor's tab strip */
+  .titlebar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--ink);
+    color: #fff;
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 0.7rem 1.1rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+  }
+  .titlebar .dots { display: flex; gap: 0.4rem; }
+  .titlebar .dots span {
+    width: 0.6rem; height: 0.6rem; border-radius: 50%;
+    background: #5a6086;
+  }
+  .titlebar .filename { opacity: 0.85; }
+
+  header.app-header {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: 1.4rem 1.5rem 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 2px rgba(22,27,51,0.04);
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.5rem, 4vw, 1.9rem);
+    letter-spacing: -0.01em;
+    margin: 0 0 0.4rem;
+    color: var(--ink);
+  }
+
+  .subtitle {
+    margin: 0 0 1rem;
+    color: var(--ink-soft);
+    font-size: 1rem;
+    max-width: 40rem;
+  }
+
+  details.help {
+    margin-top: 0.75rem;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    padding: 0.15rem 0.9rem;
+  }
+  details.help summary {
+    cursor: pointer;
+    font-weight: 700;
+    padding: 0.6rem 0;
+    color: var(--indigo-dark);
+  }
+  details.help summary:hover { color: var(--indigo); }
+  details.help ul { margin: 0.2rem 0 0.9rem; padding-left: 1.2rem; }
+  details.help li { margin-bottom: 0.35rem; }
+  kbd {
+    font-family: var(--font-mono);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    padding: 0.05rem 0.4rem;
+    font-size: 0.85em;
+  }
+
+  /* Progress */
+  section.progress-section {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  .progress-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.6rem;
+  }
+  .progress-count {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+  .progress-count .of { color: var(--ink-soft); font-weight: 500; }
+  .progress-track {
+    height: 0.65rem;
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--indigo));
+    width: 0%;
+    border-radius: 999px;
+    transition: width var(--dur) ease;
+  }
+  .completion-msg {
+    margin-top: 0.7rem;
+    font-weight: 700;
+    color: var(--green);
+    display: none;
+  }
+  .completion-msg.show { display: block; }
+
+  /* Card region: gutter + card, echoing an editor's line numbers */
+  .card-region {
+    display: grid;
+    grid-template-columns: 2.4rem 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .gutter {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding-top: 1.4rem;
+    font-family: var(--font-mono);
+    color: #9AA2C0;
+    font-size: 0.85rem;
+    user-select: none;
+  }
+  .gutter .num { line-height: 1.4; }
+  .gutter .num.current { color: var(--indigo); font-weight: 700; }
+
+  .card-heading-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.55rem;
+    flex-wrap: wrap;
+  }
+  h2.card-position {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+  .studied-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: var(--green-bg);
+    color: var(--green);
+    border: 1px solid var(--green);
+    border-radius: 999px;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    visibility: hidden;
+  }
+  .studied-badge.show { visibility: visible; }
+  .studied-badge svg { width: 0.9em; height: 0.9em; flex-shrink: 0; }
+
+  /* Flip card */
+  .flashcard {
+    perspective: 1600px;
+  }
+  .flashcard-inner {
+    position: relative;
+    min-height: 15rem;
+    transform-style: preserve-3d;
+    transition: transform var(--dur) cubic-bezier(0.4, 0.15, 0.2, 1);
+  }
+  .flashcard.is-flipped .flashcard-inner {
+    transform: rotateY(180deg);
+  }
+  .card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    padding: 1.5rem 1.5rem 1.25rem;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-face.front {
+    background: var(--surface);
+  }
+  .card-face.back {
+    background: var(--surface-back);
+    border-color: #BEE3DD;
+    transform: rotateY(180deg);
+  }
+  /* When not using 3D layering (e.g., very old browsers / static layout fallback),
+     inert + aria-hidden fully remove the non-visible face from AT and tab order. */
+  .card-face[hidden] { display: none; }
+
+  .face-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    align-self: flex-start;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    margin-bottom: 0.9rem;
+  }
+  .card-face.front .face-label { background: #E4E6FA; color: var(--indigo-dark); }
+  .card-face.back .face-label { background: #D6F0EC; color: var(--teal-dark); }
+
+  .face-content {
+    font-size: 1.15rem;
+    color: var(--ink);
+    flex-grow: 1;
+  }
+  .face-content p { margin: 0 0 0.75rem; }
+  .face-content pre {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    background: var(--ink);
+    color: #E9ECFB;
+    padding: 1rem 1.1rem;
+    border-radius: 10px;
+    overflow-x: auto;
+    line-height: 1.6;
+    margin: 0.5rem 0;
+  }
+  .face-content code {
+    font-family: var(--font-mono);
+  }
+  .face-content :not(pre) > code {
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 0.05rem 0.35rem;
+    font-size: 0.92em;
+  }
+
+  /* Controls */
+  .controls {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.25rem 1.25rem;
+  }
+  fieldset.controls-group {
+    border: none;
+    margin: 0 0 1rem;
+    padding: 0;
+  }
+  fieldset.controls-group legend {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-soft);
+    padding: 0 0 0.6rem;
+  }
+  .btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  button {
+    font-family: var(--font-body);
+    font-size: 0.98rem;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 0.65rem 1.1rem;
+    border: 2px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    transition: background var(--dur) ease, transform 0.15s ease, opacity var(--dur) ease;
+  }
+  button:active { transform: translateY(1px); }
+  button svg { width: 1.05em; height: 1.05em; flex-shrink: 0; }
+
+  .btn-primary {
+    background: var(--indigo);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--indigo-dark); }
+
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--indigo-dark);
+    border-color: var(--indigo);
+  }
+  .btn-secondary:hover:not(:disabled) { background: #EEEEFC; }
+
+  .btn-quiet {
+    background: var(--canvas);
+    color: var(--ink-soft);
+    border-color: var(--line);
+  }
+  .btn-quiet:hover:not(:disabled) { background: #E2E6F0; color: var(--ink); }
+
+  button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /* Visible focus indicator for every interactive element */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  summary:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+  /* Fallback for browsers without :focus-visible */
+  a:focus,
+  button:focus,
+  input:focus {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  /* Mark-as-studied control */
+  .studied-control {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+  }
+  .studied-control input[type="checkbox"] {
+    width: 1.35rem;
+    height: 1.35rem;
+    accent-color: var(--green);
+    flex-shrink: 0;
+  }
+  .studied-control label {
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .studied-control.is-disabled label { color: var(--ink-soft); cursor: not-allowed; }
+  .studied-control .hint {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin-left: auto;
+    font-style: italic;
+  }
+
+  /* Visually hidden but available to assistive tech */
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  footer.app-footer {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+    margin-top: 1.5rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 30rem) {
+    .card-region { grid-template-columns: 1.6rem 1fr; }
+    .gutter { font-size: 0.72rem; padding-top: 1.2rem; }
+    .card-face { padding: 1.15rem 1.1rem 1rem; }
+    .face-content { font-size: 1.05rem; }
+    .btn-row { gap: 0.5rem; }
+    button { padding: 0.6rem 0.85rem; font-size: 0.92rem; }
+  }
+
+  /* Respect reduced motion: remove animation/transition, keep function identical */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+    .flashcard-inner { transition: none !important; }
+    .skip-link { transition: none !important; }
+  }
+
+  /* High-contrast forced-colors support: don't rely on color alone */
+  @media (forced-colors: active) {
+    .studied-badge, .face-label, .progress-fill { forced-color-adjust: none; }
+  }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main-content">Skip to flashcard</a>
+
+<div class="wrap">
+
+  <div class="titlebar" aria-hidden="true">
+    <span class="dots"><span></span><span></span><span></span></span>
+    <span class="filename">first_program.cpp — CS135 Flashcards</span>
+  </div>
+
+  <header class="app-header">
+    <h1>Your First C++ Program</h1>
+    <p class="subtitle">
+      Study flashcards covering the core building blocks of a beginning C++ program:
+      preprocessor directives, <code>main()</code>, input/output, variables, data types,
+      comments, and program structure.
+    </p>
+
+    <details class="help">
+      <summary>How to use these flashcards</summary>
+      <ul>
+        <li>Select <strong>Flip</strong> (or press <kbd>F</kbd>) to reveal the answer or code example on the back of the card.</li>
+        <li>After viewing the back, the <strong>Mark as Studied</strong> checkbox becomes available.</li>
+        <li><strong>Next</strong> unlocks once the current card is marked as studied.</li>
+        <li>Use <strong>Previous</strong> and <strong>Next</strong> (or the <kbd>←</kbd> and <kbd>→</kbd> arrow keys) to move between cards.</li>
+        <li><strong>Shuffle</strong> randomizes the card order; <strong>Restart</strong> resets all progress.</li>
+        <li>Every control can be operated with the keyboard alone, using <kbd>Tab</kbd> and <kbd>Enter</kbd> / <kbd>Space</kbd>.</li>
+      </ul>
+    </details>
+  </header>
+
+  <main id="main-content">
+
+    <section class="progress-section" aria-labelledby="progress-heading">
+      <h2 id="progress-heading" class="visually-hidden">Study progress</h2>
+      <div class="progress-row">
+        <span class="progress-count">
+          <span id="studiedCount">0</span> <span class="of">of</span> <span id="totalCount">0</span> <span class="of">studied</span>
+        </span>
+      </div>
+      <div class="progress-track"
+           role="progressbar"
+           id="progressBar"
+           aria-labelledby="progress-heading"
+           aria-valuemin="0"
+           aria-valuemax="100"
+           aria-valuenow="0">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <p class="completion-msg" id="completionMsg" role="status">
+        🎉 All cards studied! Select Restart to review the deck again.
+      </p>
+    </section>
+
+    <div class="card-region">
+      <div class="gutter" id="gutter" aria-hidden="true"></div>
+
+      <div>
+        <div class="card-heading-row">
+          <h2 class="card-position" id="cardPosition">Card 1 of 1</h2>
+          <span class="studied-badge" id="studiedBadge">
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 1 1 1.4-1.4l2.8 2.8 6.8-6.8a1 1 0 0 1 1.4 0z"/></svg>
+            Already studied
+          </span>
+        </div>
+
+        <div class="flashcard" id="flashcard">
+          <div class="flashcard-inner" id="flashcardInner">
+            <div class="card-face front" id="cardFront" tabindex="-1">
+              <span class="face-label">Question</span>
+              <div class="face-content" id="frontContent"></div>
+            </div>
+            <div class="card-face back" id="cardBack" tabindex="-1" hidden>
+              <span class="face-label">Answer</span>
+              <div class="face-content" id="backContent"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <fieldset class="controls-group">
+        <legend>Navigate &amp; reveal</legend>
+        <div class="btn-row">
+          <button type="button" id="prevBtn" class="btn-quiet">
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M12.7 15.7a1 1 0 0 1-1.4 0l-5-5a1 1 0 0 1 0-1.4l5-5a1 1 0 1 1 1.4 1.4L8.4 10l4.3 4.3a1 1 0 0 1 0 1.4z"/></svg>
+            Previous
+          </button>
+          <button type="button" id="flipBtn" class="btn-primary">
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 3a7 7 0 1 1-6.3 4h2.2A5 5 0 1 0 10 5V2.5L6.5 5 10 7.5V5.5" transform="translate(0,0)"/></svg>
+            Flip Card
+          </button>
+          <button type="button" id="nextBtn" class="btn-quiet" disabled>
+            Next
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7.3 4.3a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4l-5 5a1 1 0 1 1-1.4-1.4L11.6 10 7.3 5.7a1 1 0 0 1 0-1.4z"/></svg>
+          </button>
+        </div>
+      </fieldset>
+
+      <fieldset class="controls-group">
+        <legend>Confirm your learning</legend>
+        <div class="studied-control is-disabled" id="studiedControl">
+          <input type="checkbox" id="studiedCheckbox" disabled>
+          <label for="studiedCheckbox" id="studiedLabel">Mark as Studied</label>
+          <span class="hint" id="studiedHint">Flip the card to enable</span>
+        </div>
+      </fieldset>
+
+      <fieldset class="controls-group" style="margin-bottom:0;">
+        <legend>Deck options</legend>
+        <div class="btn-row">
+          <button type="button" id="shuffleBtn" class="btn-secondary">
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M13 3h4v4h-2V6.4l-3.3 3.3-1.4-1.4L13.6 5H13V3zM3 5h5l1.8 1.8-1.4 1.4L7 6.8V6H3V5zm0 10h4v-.8l1.4-1.4L10 14.6V15H3v0zm14-2h-4v.8l-1.4 1.4 1.4 1.4V15h4v-2z"/></svg>
+            Shuffle
+          </button>
+          <button type="button" id="restartBtn" class="btn-secondary">
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 4a6 6 0 1 0 5.9 5H14a4 4 0 1 1-1.2-2.8L11 8h5V3l-1.7 1.7A6 6 0 0 0 10 4z"/></svg>
+            Restart
+          </button>
+        </div>
+      </fieldset>
+    </div>
+
+  </main>
+
+  <footer class="app-footer">
+    <p>CS135 · Introduction to C++ · Flashcard practice for your first program concepts</p>
+  </footer>
+</div>
+
+<div id="liveRegion" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------------------------------------------------
+     Card data — core beginner concepts for a first C++ program
+     --------------------------------------------------------- */
+  var cards = [
+    {
+      front: "<p>What does the <code>#include</code> directive do?</p>",
+      back: "<p>It tells the preprocessor to insert the contents of another file before compiling. It gives your program access to code written elsewhere, such as a library header.</p><pre><code>#include &lt;iostream&gt;</code></pre>"
+    },
+    {
+      front: "<p>What does <code>#include &lt;iostream&gt;</code> give your program access to?</p>",
+      back: "<p>It gives access to the standard input/output stream objects: <code>cin</code> for keyboard input and <code>cout</code> for screen output.</p>"
+    },
+    {
+      front: "<p>What is the <code>main()</code> function?</p>",
+      back: "<p>Every C++ program must have exactly one <code>main</code> function. It is where the program begins executing.</p><pre><code>int main() {\n    // program statements go here\n    return 0;\n}</code></pre>"
+    },
+    {
+      front: "<p>What do the curly braces <code>{ }</code> mark in a function?</p>",
+      back: "<p>They mark the start and end of the function's body &mdash; the block of statements that make up that function.</p>"
+    },
+    {
+      front: "<p>Why does every C++ statement end with a semicolon <code>;</code>?</p>",
+      back: "<p>The semicolon marks the end of a statement so the compiler knows where one instruction stops and the next begins. Forgetting it causes a syntax error.</p>"
+    },
+    {
+      front: "<p>What does <code>using namespace std;</code> do?</p>",
+      back: "<p>It lets you use names from the C++ standard library &mdash; like <code>cout</code>, <code>cin</code>, and <code>endl</code> &mdash; without typing <code>std::</code> in front of them each time.</p>"
+    },
+    {
+      front: "<p>What is <code>cout</code> used for?</p>",
+      back: "<p><code>cout</code> (character output) sends data to the standard output, usually the screen.</p><pre><code>cout &lt;&lt; \"Hello, World!\";</code></pre>"
+    },
+    {
+      front: "<p>What does the <code>&lt;&lt;</code> operator do when used with <code>cout</code>?</p>",
+      back: "<p>The insertion operator <code>&lt;&lt;</code> sends, or inserts, the value on its right into the output stream so it can be displayed.</p>"
+    },
+    {
+      front: "<p>What is <code>cin</code> used for?</p>",
+      back: "<p><code>cin</code> (character input) reads data that the user types on the keyboard.</p><pre><code>int age;\ncin &gt;&gt; age;</code></pre>"
+    },
+    {
+      front: "<p>What does the <code>&gt;&gt;</code> operator do when used with <code>cin</code>?</p>",
+      back: "<p>The extraction operator <code>&gt;&gt;</code> takes data from the input stream and stores it in a variable.</p>"
+    },
+    {
+      front: "<p>What does <code>endl</code> do?</p>",
+      back: "<p><code>endl</code> inserts a new line and flushes the output buffer, moving the cursor to the next line.</p><pre><code>cout &lt;&lt; \"Hi!\" &lt;&lt; endl;</code></pre>"
+    },
+    {
+      front: "<p>What is the difference between <code>endl</code> and <code>\\n</code>?</p>",
+      back: "<p>Both move output to a new line. <code>endl</code> also flushes the output buffer immediately, while <code>\\n</code> is just the newline character with no flush. Because of this, <code>\\n</code> is typically a little faster when printing many lines.</p>"
+    },
+    {
+      front: "<p>What is a variable in C++?</p>",
+      back: "<p>A named storage location in memory that holds a value, and whose value can change while the program runs. It must be declared with a data type.</p><pre><code>int score = 0;</code></pre>"
+    },
+    {
+      front: "<p>Name the common built-in data types used for a first C++ program.</p>",
+      back: "<p><code>int</code> &mdash; whole numbers<br><code>double</code> &mdash; decimal numbers<br><code>char</code> &mdash; a single character<br><code>bool</code> &mdash; true or false<br><code>string</code> &mdash; text (requires <code>#include &lt;string&gt;</code>)</p>"
+    },
+    {
+      front: "<p>How do you declare a variable in C++?</p>",
+      back: "<p>Write the data type followed by the variable name, optionally giving it a starting value.</p><pre><code>int age = 20;\ndouble price = 9.99;</code></pre>"
+    },
+    {
+      front: "<p>What is a single-line comment, and how do you write one?</p>",
+      back: "<p>Text that starts with <code>//</code> and is ignored by the compiler. Used to explain code to human readers.</p><pre><code>// This calculates the total price.</code></pre>"
+    },
+    {
+      front: "<p>What is a multi-line comment, and how do you write one?</p>",
+      back: "<p>Text between <code>/*</code> and <code>*/</code> that the compiler ignores. It can span several lines.</p><pre><code>/* This program greets\n   the user by name. */</code></pre>"
+    },
+    {
+      front: "<p>What does <code>return 0;</code> do at the end of <code>main()</code>?</p>",
+      back: "<p>It ends the <code>main</code> function and sends the value <code>0</code> back to the operating system, signaling that the program finished successfully.</p>"
+    },
+    {
+      front: "<p>Is C++ case-sensitive?</p>",
+      back: "<p>Yes. <code>cout</code> and <code>Cout</code> are treated as different identifiers, so keywords and variable names must always match their exact capitalization.</p>"
+    },
+    {
+      front: "<p>What are the basic steps to turn source code into a running program?</p>",
+      back: "<p>1. Write the source code in a <code>.cpp</code> file.<br>2. Compile it &mdash; the compiler translates it to machine code and reports any syntax errors.<br>3. Run the resulting executable program.</p>"
+    },
+    {
+      front: "<p>What is a syntax error?</p>",
+      back: "<p>A mistake that breaks the grammar rules of the C++ language, such as a missing semicolon or an unmatched brace. The compiler catches syntax errors before the program can run.</p>"
+    },
+    {
+      front: "<p>Code question: what does this program print?</p><pre><code>cout &lt;&lt; \"Sum: \" &lt;&lt; (2 + 3) &lt;&lt; endl;</code></pre>",
+      back: "<p>It prints:</p><pre><code>Sum: 5</code></pre><p>The expression <code>(2 + 3)</code> is evaluated to <code>5</code> first, and then that value is sent to <code>cout</code>.</p>"
+    },
+    {
+      front: "<p>Code question: write the minimal C++ program that prints <code>Hello, World!</code></p>",
+      back: "<pre><code>#include &lt;iostream&gt;\nusing namespace std;\n\nint main() {\n    cout &lt;&lt; \"Hello, World!\" &lt;&lt; endl;\n    return 0;\n}</code></pre>"
+    }
+  ];
+
+  var TOTAL = cards.length;
+
+  /* ---------------------------------------------------------
+     State
+     --------------------------------------------------------- */
+  var order = cards.map(function (_, i) { return i; });
+  var pos = 0;
+  var isFlipped = false;
+  var studied = new Set();
+  var seenBack = new Set();
+
+  /* ---------------------------------------------------------
+     Element references
+     --------------------------------------------------------- */
+  var el = {
+    gutter: document.getElementById("gutter"),
+    cardPosition: document.getElementById("cardPosition"),
+    studiedBadge: document.getElementById("studiedBadge"),
+    flashcard: document.getElementById("flashcard"),
+    cardFront: document.getElementById("cardFront"),
+    cardBack: document.getElementById("cardBack"),
+    frontContent: document.getElementById("frontContent"),
+    backContent: document.getElementById("backContent"),
+    prevBtn: document.getElementById("prevBtn"),
+    nextBtn: document.getElementById("nextBtn"),
+    flipBtn: document.getElementById("flipBtn"),
+    shuffleBtn: document.getElementById("shuffleBtn"),
+    restartBtn: document.getElementById("restartBtn"),
+    studiedControl: document.getElementById("studiedControl"),
+    studiedCheckbox: document.getElementById("studiedCheckbox"),
+    studiedHint: document.getElementById("studiedHint"),
+    studiedCount: document.getElementById("studiedCount"),
+    totalCount: document.getElementById("totalCount"),
+    progressBar: document.getElementById("progressBar"),
+    progressFill: document.getElementById("progressFill"),
+    completionMsg: document.getElementById("completionMsg"),
+    liveRegion: document.getElementById("liveRegion")
+  };
+
+  el.totalCount.textContent = String(TOTAL);
+
+  /* ---------------------------------------------------------
+     Helpers
+     --------------------------------------------------------- */
+  function announce(msg) {
+    el.liveRegion.textContent = "";
+    // Force a DOM change so repeated identical messages are still announced
+    window.setTimeout(function () {
+      el.liveRegion.textContent = msg;
+    }, 40);
+  }
+
+  function currentId() {
+    return order[pos];
+  }
+
+  function shuffleArray(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function buildGutter() {
+    el.gutter.innerHTML = "";
+    for (var i = 0; i < order.length; i++) {
+      var span = document.createElement("span");
+      span.className = "num" + (i === pos ? " current" : "");
+      span.textContent = String(i + 1).padStart(2, "0");
+      el.gutter.appendChild(span);
+    }
+  }
+
+  /* ---------------------------------------------------------
+     Render
+     --------------------------------------------------------- */
+  function render(options) {
+    options = options || {};
+    var id = currentId();
+    var card = cards[id];
+
+    el.frontContent.innerHTML = card.front;
+    el.backContent.innerHTML = card.back;
+
+    el.cardPosition.textContent = "Card " + (pos + 1) + " of " + order.length;
+
+    // Flip visual state + accessibility exposure of each face
+    if (isFlipped) {
+      el.flashcard.classList.add("is-flipped");
+      el.cardBack.hidden = false;
+      el.cardFront.hidden = true;
+      if ("inert" in el.cardFront) { el.cardFront.inert = true; }
+      if ("inert" in el.cardBack) { el.cardBack.inert = false; }
+    } else {
+      el.flashcard.classList.remove("is-flipped");
+      el.cardFront.hidden = false;
+      el.cardBack.hidden = true;
+      if ("inert" in el.cardFront) { el.cardFront.inert = false; }
+      if ("inert" in el.cardBack) { el.cardBack.inert = true; }
+    }
+
+    // Already-studied badge
+    var isStudied = studied.has(id);
+    el.studiedBadge.classList.toggle("show", isStudied);
+
+    // Mark-as-studied control
+    var canMark = seenBack.has(id) || isStudied;
+    el.studiedCheckbox.checked = isStudied;
+    el.studiedCheckbox.disabled = !canMark || isStudied;
+    el.studiedControl.classList.toggle("is-disabled", !canMark);
+    if (isStudied) {
+      el.studiedHint.textContent = "Recorded";
+    } else if (canMark) {
+      el.studiedHint.textContent = "Ready to confirm";
+    } else {
+      el.studiedHint.textContent = "Flip the card to enable";
+    }
+
+    // Navigation buttons
+    el.prevBtn.disabled = pos === 0;
+    var isLast = pos === order.length - 1;
+    el.nextBtn.disabled = !isStudied || isLast;
+
+    // Progress
+    el.studiedCount.textContent = String(studied.size);
+    var pct = Math.round((studied.size / TOTAL) * 100);
+    el.progressFill.style.width = pct + "%";
+    el.progressBar.setAttribute("aria-valuenow", String(pct));
+    el.progressBar.setAttribute("aria-valuetext", studied.size + " of " + TOTAL + " cards studied");
+
+    var allDone = studied.size === TOTAL;
+    el.completionMsg.classList.toggle("show", allDone);
+
+    buildGutter();
+
+    if (options.announceNav) {
+      announce("Card " + (pos + 1) + " of " + order.length + (isStudied ? ", already studied" : "") + ". Showing the question side.");
+    }
+  }
+
+  /* ---------------------------------------------------------
+     Actions
+     --------------------------------------------------------- */
+  function flip() {
+    isFlipped = !isFlipped;
+    if (isFlipped) {
+      seenBack.add(currentId());
+    }
+    render();
+    announce(isFlipped ? "Showing the answer side." : "Showing the question side.");
+    // Move focus to the now-visible face so screen reader users land on the new content
+    if (isFlipped) {
+      el.cardBack.focus();
+    } else {
+      el.cardFront.focus();
+    }
+  }
+
+  function goPrev() {
+    if (pos === 0) return;
+    pos -= 1;
+    isFlipped = false;
+    render({ announceNav: true });
+  }
+
+  function goNext() {
+    if (el.nextBtn.disabled) return;
+    if (pos >= order.length - 1) return;
+    pos += 1;
+    isFlipped = false;
+    render({ announceNav: true });
+  }
+
+  function markStudied() {
+    var id = currentId();
+    if (studied.has(id)) return; // count each card only once
+    if (!(seenBack.has(id))) return;
+    studied.add(id);
+    render();
+    var allDone = studied.size === TOTAL;
+    announce(
+      "Card marked as studied. " + studied.size + " of " + TOTAL + " studied." +
+      (allDone ? " All cards studied. Great job!" : "")
+    );
+  }
+
+  function shuffle() {
+    order = shuffleArray(order);
+    pos = 0;
+    isFlipped = false;
+    render();
+    announce("Cards shuffled. Now on card 1 of " + order.length + ".");
+  }
+
+  function restart() {
+    order = cards.map(function (_, i) { return i; });
+    pos = 0;
+    isFlipped = false;
+    studied.clear();
+    seenBack.clear();
+    render();
+    announce("Progress reset. Starting over from card 1 of " + order.length + ".");
+  }
+
+  /* ---------------------------------------------------------
+     Event listeners
+     --------------------------------------------------------- */
+  el.flipBtn.addEventListener("click", flip);
+  el.prevBtn.addEventListener("click", goPrev);
+  el.nextBtn.addEventListener("click", goNext);
+  el.shuffleBtn.addEventListener("click", shuffle);
+  el.restartBtn.addEventListener("click", restart);
+  el.studiedCheckbox.addEventListener("change", function () {
+    if (el.studiedCheckbox.checked) {
+      markStudied();
+    }
+  });
+
+  // Optional keyboard shortcuts (documented in the Help panel).
+  // These are purely additive; every action is already reachable via Tab + Enter/Space.
+  document.addEventListener("keydown", function (e) {
+    var tag = (document.activeElement && document.activeElement.tagName) || "";
+    // Don't hijack typing inside a form control other than our own buttons.
+    if (tag === "INPUT" && document.activeElement !== el.studiedCheckbox) return;
+
+    if (e.key === "ArrowRight" && !e.altKey && !e.ctrlKey && !e.metaKey) {
+      if (!el.nextBtn.disabled) { e.preventDefault(); goNext(); }
+    } else if (e.key === "ArrowLeft" && !e.altKey && !e.ctrlKey && !e.metaKey) {
+      if (!el.prevBtn.disabled) { e.preventDefault(); goPrev(); }
+    } else if ((e.key === "f" || e.key === "F") && !e.altKey && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      flip();
+    }
+  });
+
+  /* ---------------------------------------------------------
+     Init
+     --------------------------------------------------------- */
+  render();
+})();
+</script>
+</body>
+</html>
