@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIT 130: Interactive Pseudocode Code Writer</title>
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --surface: #ffffff;
+            --surface-subtle: #f1f5f9;
+            --border: #cbd5e1;
+            --border-dark: #94a3b8;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --primary: #1e293b;
+            --primary-accent: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success-bg: #f0fdf4;
+            --success-border: #86efac;
+            --success-text: #166534;
+            --error-bg: #fef2f2;
+            --error-border: #fca5a5;
+            --error-text: #991b1b;
+            --warning-bg: #fffbeb;
+            --warning-border: #fde68a;
+            --warning-text: #92400e;
+            --code-bg: #1e293b;
+            --code-text: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1280px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Header & Student Info Bar */
+        header {
+            background-color: var(--primary);
+            color: #ffffff;
+            padding: 20px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            border-bottom: 2px solid #0f172a;
+        }
+
+        .header-title h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+        }
+
+        .header-title p {
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .student-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .student-bar label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .student-bar input {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #64748b;
+            background: #ffffff;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            outline: none;
+            width: 180px;
+        }
+
+        .student-bar input:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3);
+        }
+
+        .score-badge {
+            background: #2563eb;
+            color: #ffffff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.03em;
+        }
+
+        /* Main Workspace Layout */
+        .workspace {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            min-height: 640px;
+        }
+
+        /* Sidebar / Quick Guide */
+        .sidebar {
+            background: var(--surface-subtle);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .sidebar-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .sidebar-card h2 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--primary-accent);
+            padding-bottom: 6px;
+        }
+
+        .rule-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .rule-item {
+            font-size: 0.875rem;
+            line-height: 1.4;
+            color: var(--text-secondary);
+        }
+
+        .rule-item strong {
+            color: var(--text-primary);
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        .problem-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .problem-box h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 8px;
+        }
+
+        .problem-box p {
+            font-size: 0.875rem;
+            color: #1e3a8a;
+            line-height: 1.5;
+        }
+
+        /* Main Editor Section */
+        .editor-area {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: #ffffff;
+        }
+
+        /* Problem Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: var(--surface-subtle);
+            border-radius: 6px 6px 0 0;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: #e2e8f0;
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: #ffffff;
+            border-color: var(--primary);
+        }
+
+        /* Toolbar / Keyword Palette */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            background: var(--surface-subtle);
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .toolbar-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-right: 4px;
+            width: 100%;
+        }
+
+        .btn-keyword {
+            padding: 6px 14px;
+            background: #ffffff;
+            border: 1px solid var(--border-dark);
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #1e293b;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: all 0.15s;
+        }
+
+        .btn-keyword:hover {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-chip {
+            padding: 5px 10px;
+            background: #e2e8f0;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.825rem;
+            color: #334155;
+            cursor: pointer;
+        }
+
+        .btn-chip:hover {
+            background: #cbd5e1;
+            color: #0f172a;
+        }
+
+        /* Code Input Canvas */
+        .code-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-header label {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .editor-hint-text {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        textarea.code-editor {
+            width: 100%;
+            height: 240px;
+            background: var(--code-bg);
+            color: var(--code-text);
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 1rem;
+            line-height: 1.6;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-dark);
+            resize: vertical;
+            outline: none;
+            tab-size: 4;
+        }
+
+        textarea.code-editor:focus {
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+        }
+
+        /* Control Buttons */
+        .control-panel {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-primary {
+            background: var(--primary-accent);
+            color: #ffffff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: #ffffff;
+            color: var(--text-primary);
+            border: 1px solid var(--border-dark);
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface-subtle);
+        }
+
+        /* Feedback Box */
+        .feedback-area {
+            min-height: 80px;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface-subtle);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .feedback-area.success {
+            background: var(--success-bg);
+            border-color: var(--success-border);
+            color: var(--success-text);
+        }
+
+        .feedback-area.error {
+            background: var(--error-bg);
+            border-color: var(--error-border);
+            color: var(--error-text);
+        }
+
+        .feedback-area.warning {
+            background: var(--warning-bg);
+            border-color: var(--warning-border);
+            color: var(--warning-text);
+        }
+
+        .feedback-icon {
+            font-size: 1.25rem;
+            font-weight: bold;
+            line-height: 1;
+            margin-top: 2px;
+        }
+
+        .feedback-content h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .feedback-content p {
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+
+        /* Success Completion Banner */
+        .completion-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .completion-modal.active {
+            display: flex;
+        }
+
+        .completion-card {
+            background: #ffffff;
+            padding: 36px 48px;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            text-align: center;
+            max-width: 480px;
+            width: 90%;
+            border: 2px solid var(--success-border);
+        }
+
+        .completion-card h2 {
+            color: var(--success-text);
+            font-size: 1.6rem;
+            margin-bottom: 12px;
+        }
+
+        .completion-card p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 24px;
+        }
+
+        .completion-card .final-score {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-accent);
+            margin: 12px 0;
+            padding: 12px;
+            background: var(--surface-subtle);
+            border-radius: 8px;
+        }
+
+        /* Accessibility Focus outline */
+        button:focus-visible, input:focus-visible, textarea:focus-visible {
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" role="main">
+        <!-- Top Header Bar -->
+        <header>
+            <div class="header-title">
+                <h1>CIT 130: Intro to Java — Pseudocode Builder</h1>
+                <p>Interactive Practice: Step-by-Step Algorithm Logic Construction</p>
+            </div>
+            <div class="student-bar">
+                <label for="studentName">Student Name:</label>
+                <input type="text" id="studentName" placeholder="Enter full name" aria-required="true" autocomplete="off" oninput="updateStudentName()">
+                <div class="score-badge" id="scoreDisplay" aria-live="polite">Score: 0 / 10</div>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <div class="workspace">
+            <!-- Sidebar with Rules and Problem Statement -->
+            <aside class="sidebar" aria-label="Reference Panel">
+                <div class="problem-box">
+                    <h3 id="problemTitle">Challenge 1: Coin Value Calculator</h3>
+                    <p id="problemDescription">
+                        Write pseudocode that asks the user for the number of <strong>quarters</strong>, <strong>dimes</strong>, and <strong>nickels</strong>. Calculate the total value in <strong>pennies</strong> (cents) and display the total result.<br><br><strong>Assume the following values: Quarter = 25 pennies, Dime = 10 pennies, Nickel = 5 pennies.</strong>
+                    </p>
+                </div>
+
+                <div class="sidebar-card">
+                    <h2>Rule Checklist / Quick Guide</h2>
+                    <ul class="rule-list">
+                        <li class="rule-item">
+                            <strong>Start</strong> : Begins the algorithm. Must be the very first keyword.
+                        </li>
+                        <li class="rule-item">
+                            <strong>Input</strong> : Reads data from the user (e.g., quarters, dimes, nickels).
+                        </li>
+                        <li class="rule-item">
+                            <strong>Set</strong> : Assigns or calculates a value (e.g., total = quarters * 25 + dimes * 10 + nickels * 5).
+                        </li>
+                        <li class="rule-item">
+                            <strong>Output</strong> : Displays the calculated result to the user.
+                        </li>
+                        <li class="rule-item">
+                            <strong>End</strong> : Finishes the algorithm. Must be the final statement.
+                        </li>
+                    </ul>
+                </div>
+            </aside>
+
+            <!-- Interactive Editor Area -->
+            <section class="editor-area" aria-label="Interactive Code Editor">
+                <!-- Navigation Tabs -->
+                <nav class="tabs" aria-label="Problem Challenges">
+                    <button class="tab-btn active" onclick="switchChallenge(1)" id="tab1">1. Coin Value</button>
+                    <button class="tab-btn" onclick="switchChallenge(2)" id="tab2">2. Rectangle Area</button>
+                    <button class="tab-btn" onclick="switchChallenge(3)" id="tab3">3. Temperature Converter</button>
+                </nav>
+
+                <!-- Quick Keyword Inserter Toolbar -->
+                <div class="toolbar" aria-label="Pseudocode Construction Palette">
+                    <span class="toolbar-label">Quick Insert Keywords & Helper Chips:</span>
+                    <button type="button" class="btn-keyword" onclick="insertText('Start\n')">Start</button>
+                    <button type="button" class="btn-keyword" onclick="insertText('Input ')">Input</button>
+                    <button type="button" class="btn-keyword" onclick="insertText('Set ')">Set</button>
+                    <button type="button" class="btn-keyword" onclick="insertText('Output ')">Output</button>
+                    <button type="button" class="btn-keyword" onclick="insertText('End')">End</button>
+                    
+                    <div style="display: none;" id="helperChips">
+                        <!-- Dynamic helper chips loaded per challenge -->
+                    </div>
+                </div>
+
+                <!-- Textarea Code Canvas -->
+                <div class="code-container">
+                    <div class="editor-header">
+                        <label for="codeEditor">Pseudocode Workspace:</label>
+                        <span class="editor-hint-text">Click keywords above or type directly into the editor</span>
+                    </div>
+                    <textarea id="codeEditor" class="code-editor" spellcheck="false" placeholder="// Click keywords above or write your pseudocode here...&#10;// Example Structure:&#10;// Start&#10;// Input ...&#10;// Set ...&#10;// Output ...&#10;// End"></textarea>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="control-panel">
+                    <button class="btn-primary" onclick="verifyCode()">Run & Verify Code</button>
+                    <button class="btn-secondary" onclick="resetEditor()">Reset Workspace</button>
+                </div>
+
+                <!-- Real-time Interactive Feedback -->
+                <div id="feedbackArea" class="feedback-area" aria-live="polite">
+                    <div class="feedback-icon" id="feedbackIcon">ℹ️</div>
+                    <div class="feedback-content">
+                        <h4 id="feedbackTitle">Ready to Begin</h4>
+                        <p id="feedbackText">Enter your name, write your pseudocode using the structure keywords (Start, Input, Set, Output, End), and click "Run & Verify Code".</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Completion Modal -->
+    <div class="completion-modal" id="completionModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="completion-card">
+            <h2 id="modalTitle">🎉 Exercise Completed!</h2>
+            <p>Outstanding work on mastering pseudocode logic!</p>
+            <div class="final-score" id="modalScore">Lina — 10/10</div>
+            <p id="modalMsg">Congratulations! You have correctly written all structured pseudocode challenges.</p>
+            <button class="btn-primary" onclick="closeModal()">Review Work</button>
+        </div>
+    </div>
+
+    <script>
+        let currentChallenge = 1;
+        let pointsAwarded = { 1: false, 2: false, 3: false };
+        let studentScore = 0;
+
+        const challenges = {
+            1: {
+                title: "Challenge 1: Coin Value Calculator",
+                description: "Write pseudocode that asks the user for the number of <strong>quarters</strong>, <strong>dimes</strong>, and <strong>nickels</strong>. Calculate the total value in <strong>pennies</strong> (cents) and display the total result.<br><br><strong>Assume the following values: Quarter = 25 pennies, Dime = 10 pennies, Nickel = 5 pennies.</strong>",
+                chips: [],
+                validate: function(codeLines) {
+                    // Check student name first
+                    const name = document.getElementById('studentName').value.trim();
+                    if (!name) {
+                        return { valid: false, message: "Please enter your Student Name at the top of the page before submitting." };
+                    }
+
+                    if (codeLines.length < 5) {
+                        return { valid: false, message: "Your pseudocode looks incomplete. Ensure you include Start, Input, Set, Output, and End lines." };
+                    }
+
+                    // Step 1: Start
+                    if (codeLines[0].toLowerCase() !== 'start') {
+                        return { valid: false, message: "Line 1 must be 'Start' to mark the beginning of the algorithm." };
+                    }
+
+                    // Step 2: Last line End
+                    if (codeLines[codeLines.length - 1].toLowerCase() !== 'end') {
+                        return { valid: false, message: "The final line must be 'End' to finish the algorithm." };
+                    }
+
+                    const fullText = codeLines.join('\n').toLowerCase();
+
+                    // Step 3: Check Input
+                    const hasInputQuarters = fullText.includes('input') && fullText.includes('quarter');
+                    const hasInputDimes = fullText.includes('dime');
+                    const hasInputNickels = fullText.includes('nickel');
+
+                    if (!hasInputQuarters || !hasInputDimes || !hasInputNickels) {
+                        return { 
+                            valid: false, 
+                            message: "Hint: Your algorithm needs to receive input for all three coin types (quarters, dimes, and nickels) using the 'Input' keyword." 
+                        };
+                    }
+
+                    // Step 4: Check Set calculation
+                    const hasSet = fullText.includes('set');
+                    const has25 = fullText.includes('25');
+                    const has10 = fullText.includes('10');
+                    const has5 = fullText.includes('5');
+
+                    if (!hasSet || !has25 || !has10 || !has5) {
+                        return { 
+                            valid: false, 
+                            message: "Hint: Use 'Set' to calculate the total cents. Remember: quarters are worth 25 cents, dimes 10 cents, and nickels 5 cents." 
+                        };
+                    }
+
+                    // Step 5: Check Output
+                    const hasOutput = fullText.includes('output') || fullText.includes('display') || fullText.includes('print');
+                    if (!hasOutput) {
+                        return { 
+                            valid: false, 
+                            message: "Hint: Use the 'Output' keyword to display the calculated total value to the user before ending." 
+                        };
+                    }
+
+                    return { valid: true, message: "Perfect! You correctly used Start, Input, Set, Output, and End to construct the coin calculation pseudocode." };
+                }
+            },
+            2: {
+                title: "Challenge 2: Rectangle Area & Perimeter",
+                description: "Write pseudocode that inputs the <strong>length</strong> and <strong>width</strong> of a rectangle. Calculate the <strong>area</strong> (length * width) and display the area.",
+                chips: [],
+                validate: function(codeLines) {
+                    const name = document.getElementById('studentName').value.trim();
+                    if (!name) return { valid: false, message: "Please enter your Student Name at the top." };
+
+                    if (codeLines[0].toLowerCase() !== 'start') return { valid: false, message: "Line 1 must be 'Start'." };
+                    if (codeLines[codeLines.length - 1].toLowerCase() !== 'end') return { valid: false, message: "The final line must be 'End'." };
+
+                    const fullText = codeLines.join('\n').toLowerCase();
+                    if (!fullText.includes('input') || !fullText.includes('length') || !fullText.includes('width')) {
+                        return { valid: false, message: "Hint: Make sure to 'Input length, width'." };
+                    }
+                    if (!fullText.includes('set') || !fullText.includes('area') || !fullText.includes('*')) {
+                        return { valid: false, message: "Hint: Use 'Set area = length * width' to calculate the area." };
+                    }
+                    if (!fullText.includes('output')) {
+                        return { valid: false, message: "Hint: Use 'Output area' to display the result." };
+                    }
+                    return { valid: true, message: "Great job! Your rectangle calculation pseudocode is accurate." };
+                }
+            },
+            3: {
+                title: "Challenge 3: Temperature Converter (Fahrenheit to Celsius)",
+                description: "Write pseudocode that inputs temperature in <strong>fahrenheit</strong>. Calculate <strong>celsius</strong> using formula <code>(fahrenheit - 32) * 5 / 9</code> and output <strong>celsius</strong>.",
+                chips: [],
+                validate: function(codeLines) {
+                    const name = document.getElementById('studentName').value.trim();
+                    if (!name) return { valid: false, message: "Please enter your Student Name at the top." };
+
+                    if (codeLines[0].toLowerCase() !== 'start') return { valid: false, message: "Line 1 must be 'Start'." };
+                    if (codeLines[codeLines.length - 1].toLowerCase() !== 'end') return { valid: false, message: "The final line must be 'End'." };
+
+                    const fullText = codeLines.join('\n').toLowerCase();
+                    if (!fullText.includes('input') || !fullText.includes('fahrenheit')) {
+                        return { valid: false, message: "Hint: Use 'Input fahrenheit' to get the temperature." };
+                    }
+                    if (!fullText.includes('set') || !fullText.includes('32')) {
+                        return { valid: false, message: "Hint: Use 'Set celsius = (fahrenheit - 32) * 5 / 9'." };
+                    }
+                    if (!fullText.includes('output') || !fullText.includes('celsius')) {
+                        return { valid: false, message: "Hint: Use 'Output celsius' to display the result." };
+                    }
+                    return { valid: true, message: "Excellent! You have successfully mastered temperature conversion pseudocode!" };
+                }
+            }
+        };
+
+        function insertText(text) {
+            const textarea = document.getElementById('codeEditor');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const current = textarea.value;
+
+            textarea.value = current.substring(0, start) + text + current.substring(end);
+            textarea.focus();
+            textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        }
+
+        function loadChallenge(id) {
+            currentChallenge = id;
+            const ch = challenges[id];
+            document.getElementById('problemTitle').innerHTML = ch.title;
+            document.getElementById('problemDescription').innerHTML = ch.description;
+
+            // Load Chips
+            const chipContainer = document.getElementById('helperChips');
+            chipContainer.innerHTML = '';
+            ch.chips.forEach(chip => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn-chip';
+                btn.textContent = chip;
+                btn.onclick = () => insertText(chip + ' ');
+                chipContainer.appendChild(btn);
+            });
+
+            // Update Tab styles
+            for (let i = 1; i <= 3; i++) {
+                const tab = document.getElementById('tab' + i);
+                if (i === id) tab.classList.add('active');
+                else tab.classList.remove('active');
+            }
+
+            resetFeedback();
+        }
+
+        function switchChallenge(id) {
+            loadChallenge(id);
+            document.getElementById('codeEditor').value = '';
+        }
+
+        function verifyCode() {
+            const rawCode = document.getElementById('codeEditor').value;
+            const lines = rawCode.split('\n').map(l => l.trim()).filter(l => l.length > 0 && !l.startsWith('//'));
+            
+            const result = challenges[currentChallenge].validate(lines);
+            const feedbackArea = document.getElementById('feedbackArea');
+            const feedbackIcon = document.getElementById('feedbackIcon');
+            const feedbackTitle = document.getElementById('feedbackTitle');
+            const feedbackText = document.getElementById('feedbackText');
+
+            if (result.valid) {
+                feedbackArea.className = 'feedback-area success';
+                feedbackIcon.textContent = '✅';
+                feedbackTitle.textContent = 'Challenge Passed!';
+                feedbackText.textContent = result.message;
+
+                if (!pointsAwarded[currentChallenge]) {
+                    pointsAwarded[currentChallenge] = true;
+                    recalculateScore();
+                }
+            } else {
+                feedbackArea.className = 'feedback-area error';
+                feedbackIcon.textContent = '❌';
+                feedbackTitle.textContent = 'Needs Revision';
+                feedbackText.textContent = result.message;
+            }
+        }
+
+        function recalculateScore() {
+            // Main challenge (Coin Value) is worth 10 pts; tabs 2 and 3 provide bonus mastery confirmation
+            let count = 0;
+            if (pointsAwarded[1]) count += 10;
+            studentScore = count;
+
+            const name = document.getElementById('studentName').value.trim() || 'Student';
+            document.getElementById('scoreDisplay').textContent = `Score: ${studentScore} / 10`;
+
+            if (pointsAwarded[1]) {
+                showCompletionModal(name, studentScore);
+            }
+        }
+
+        function updateStudentName() {
+            const name = document.getElementById('studentName').value.trim() || 'Student';
+            document.getElementById('scoreDisplay').textContent = `Score: ${studentScore} / 10`;
+        }
+
+        function resetEditor() {
+            document.getElementById('codeEditor').value = '';
+            resetFeedback();
+        }
+
+        function resetFeedback() {
+            const feedbackArea = document.getElementById('feedbackArea');
+            feedbackArea.className = 'feedback-area';
+            document.getElementById('feedbackIcon').textContent = 'ℹ️';
+            document.getElementById('feedbackTitle').textContent = 'Ready to Begin';
+            document.getElementById('feedbackText').textContent = 'Enter your name, write your pseudocode using keywords (Start, Input, Set, Output, End), and click "Run & Verify Code".';
+        }
+
+        function showCompletionModal(name, score) {
+            document.getElementById('modalScore').textContent = `${name} — ${score}/10`;
+            document.getElementById('completionModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('completionModal').classList.remove('active');
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            loadChallenge(1);
+        };
+    </script>
+</body>
+</html>

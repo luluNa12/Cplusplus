@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIT 130: Interactive Pseudocode Writer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --border-color: #475569;
+            --kw-start-end: #ec4899;
+            --kw-input: #3b82f6;
+            --kw-set: #8b5cf6;
+            --kw-output: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .badge {
+            background-color: var(--accent-blue);
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 320px 1fr 340px;
+            gap: 20px;
+            flex: 1;
+        }
+
+        @media (max-width: 1200px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 4px;
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Instructions Panel */
+        .task-card {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px;
+        }
+
+        .task-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 6px;
+        }
+
+        .task-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .keywords-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        .kw-chip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            border: 1px solid transparent;
+        }
+
+        .kw-chip:hover {
+            transform: translateX(4px);
+            filter: brightness(1.2);
+        }
+
+        .kw-start { background-color: rgba(236, 72, 153, 0.15); color: #f472b6; border-color: rgba(236, 72, 153, 0.3); }
+        .kw-input { background-color: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); }
+        .kw-set   { background-color: rgba(139, 92, 246, 0.15); color: #a78bfa; border-color: rgba(139, 92, 246, 0.3); }
+        .kw-output{ background-color: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
+        .kw-end   { background-color: rgba(236, 72, 153, 0.15); color: #f472b6; border-color: rgba(236, 72, 153, 0.3); }
+
+        .kw-chip-desc {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        /* Editor Panel */
+        .editor-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            position: relative;
+        }
+
+        .editor-container {
+            position: relative;
+            flex: 1;
+            min-height: 280px;
+            background-color: #090d16;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .line-numbers {
+            width: 40px;
+            padding: 12px 0;
+            background-color: #0f172a;
+            color: var(--text-muted);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            text-align: right;
+            padding-right: 10px;
+            user-select: none;
+            border-right: 1px solid var(--border-color);
+            line-height: 1.6;
+        }
+
+        textarea {
+            flex: 1;
+            background: transparent;
+            color: #f1f5f9;
+            border: none;
+            padding: 12px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .controls-bar {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #475569;
+        }
+
+        /* Execution & Output Panel */
+        .simulation-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .memory-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            background-color: #0f172a;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .memory-table th, .memory-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .memory-table th {
+            background-color: #1e293b;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .memory-table td {
+            font-family: 'Fira Code', monospace;
+        }
+
+        .console-output {
+            background-color: #090d16;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            min-height: 120px;
+            color: #34d399;
+            overflow-y: auto;
+            flex: 1;
+            white-space: pre-wrap;
+        }
+
+        .feedback-badge {
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: none;
+        }
+
+        .feedback-badge.success {
+            display: block;
+            background-color: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--accent-green);
+            color: #34d399;
+        }
+
+        .feedback-badge.error {
+            display: block;
+            background-color: rgba(239, 68, 68, 0.15);
+            border: 1px solid var(--accent-red);
+            color: #f87171;
+        }
+
+        /* Select task tabs */
+        .task-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .tab-btn {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        /* Flow Visualizer */
+        .flow-tracker {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background: #0f172a;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .flow-step {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border: 2px solid var(--border-color);
+        }
+
+        .flow-step.active {
+            background: var(--accent-blue);
+            color: white;
+            border-color: #60a5fa;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        .flow-step.completed {
+            background: var(--accent-green);
+            color: white;
+            border-color: #34d399;
+        }
+
+        .flow-line {
+            flex: 1;
+            height: 2px;
+            background: var(--border-color);
+            margin: 0 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand-title">
+            <span class="badge">CIT 130</span>
+            <h1>Interactive Pseudocode Writer &amp; Simulator</h1>
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+            Topic: Building Blocks (Start, Input, Set, Output, End)
+        </div>
+    </header>
+
+    <div class="task-tabs">
+        <button class="tab-btn active" onclick="loadTask(1)">Challenge 1: Greeting</button>
+        <button class="tab-btn" onclick="loadTask(2)">Challenge 2: Tax Calculator</button>
+        <button class="tab-btn" onclick="loadTask(3)">Challenge 3: Average Grade</button>
+    </div>
+
+    <div class="app-container">
+
+        <!-- Panel 1: Guide & Keywords -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">📋 Challenge &amp; Palette</span>
+            </div>
+
+            <div class="task-card">
+                <div class="task-title" id="task-title">Challenge 1: Basic Greeting</div>
+                <div class="task-desc" id="task-desc">
+                    Write pseudocode to take the user's <strong>userName</strong> as input and display a hello message output.
+                </div>
+            </div>
+
+            <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-top: 4px;">
+                CLICK KEYWORD TO INSERT:
+            </div>
+
+            <div class="keywords-grid">
+                <div class="kw-chip kw-start" onclick="insertKeyword('Start')">
+                    <span>Start</span>
+                    <span class="kw-chip-desc">Begin Program</span>
+                </div>
+                <div class="kw-chip kw-input" onclick="insertKeyword('Input ')">
+                    <span>Input</span>
+                    <span class="kw-chip-desc">Read User Data</span>
+                </div>
+                <div class="kw-chip kw-set" onclick="insertKeyword('Set ')">
+                    <span>Set</span>
+                    <span class="kw-chip-desc">Assign / Calculate</span>
+                </div>
+                <div class="kw-chip kw-output" onclick="insertKeyword('Output ')">
+                    <span>Output</span>
+                    <span class="kw-chip-desc">Display Result</span>
+                </div>
+                <div class="kw-chip kw-end" onclick="insertKeyword('End')">
+                    <span>End</span>
+                    <span class="kw-chip-desc">Terminate Program</span>
+                </div>
+            </div>
+
+            <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                <strong>Rule Checklist:</strong>
+                <ul style="padding-left: 16px; margin-top: 4px;">
+                    <li>Always begin with <code>Start</code></li>
+                    <li>Use <code>Input variableName</code> for inputs</li>
+                    <li>Use <code>Set variable = expression</code></li>
+                    <li>Use <code>Output variableOrText</code></li>
+                    <li>Always conclude with <code>End</code></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Panel 2: Editor -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">💻 Pseudocode Editor</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Standard Java Pseudocode Syntax</span>
+            </div>
+
+            <div class="editor-wrapper">
+                <div class="editor-container">
+                    <div class="line-numbers" id="line-numbers">1<br>2<br>3<br>4<br>5</div>
+                    <textarea id="code-input" spellcheck="false" placeholder="Write your pseudocode here..."></textarea>
+                </div>
+            </div>
+
+            <div class="controls-bar">
+                <button class="btn btn-primary" onclick="runSimulation()">
+                    ▶ Run &amp; Verify Code
+                </button>
+                <button class="btn btn-secondary" onclick="resetEditor()">
+                    🔄 Reset
+                </button>
+            </div>
+
+            <div id="feedback-badge" class="feedback-badge"></div>
+        </div>
+
+        <!-- Panel 3: Execution & Memory Visualizer -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">⚙️ Visual Execution</span>
+            </div>
+
+            <div class="flow-tracker">
+                <div class="flow-step" id="fs-1">1</div>
+                <div class="flow-line"></div>
+                <div class="flow-step" id="fs-2">2</div>
+                <div class="flow-line"></div>
+                <div class="flow-step" id="fs-3">3</div>
+                <div class="flow-line"></div>
+                <div class="flow-step" id="fs-4">4</div>
+                <div class="flow-line"></div>
+                <div class="flow-step" id="fs-5">5</div>
+            </div>
+
+            <div class="simulation-container">
+                <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">
+                    VARIABLE MEMORY (RAM):
+                </div>
+
+                <table class="memory-table">
+                    <thead>
+                        <tr>
+                            <th>Variable</th>
+                            <th>Current Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="memory-body">
+                        <tr>
+                            <td colspan="2" style="color: var(--text-muted); text-align: center;">No variables initialized</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-top: 8px;">
+                    CONSOLE OUTPUT:
+                </div>
+
+                <div class="console-output" id="console-log">&gt; Program ready. Press "Run &amp; Verify Code" to simulate execution.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const tasks = {
+            1: {
+                title: "Challenge 1: Basic Greeting",
+                desc: "Write pseudocode to take the user's <strong>userName</strong> as input and output <strong>userName</strong>.",
+                expectedInputs: ["userName"],
+                expectedCalculations: [],
+                expectedOutputs: ["userName"]
+            },
+            2: {
+                title: "Challenge 2: Item Tax & Total",
+                desc: "Read <strong>price</strong>. Calculate <strong>tax</strong> as <code>price * 0.07</code>. Set <strong>total</strong> to <code>price + tax</code>. Output <strong>total</strong>.",
+                expectedInputs: ["price"],
+                expectedCalculations: [
+                    { varName: "tax", allowedFormulas: ["price*0.07", "price*0.070", "0.07*price", "0.070*price"], sampleVal: 7.00 },
+                    { varName: "total", allowedFormulas: ["price+tax", "tax+price"], sampleVal: 107.00 }
+                ],
+                expectedOutputs: ["total"]
+            },
+            3: {
+                title: "Challenge 3: Average Grade",
+                desc: "Input <strong>score1</strong> and <strong>score2</strong>. Set <strong>average</strong> to <code>(score1 + score2) / 2</code>. Output <strong>average</strong>.",
+                expectedInputs: ["score1", "score2"],
+                expectedCalculations: [
+                    { varName: "average", allowedFormulas: ["(score1+score2)/2", "(score2+score1)/2"], sampleVal: 88.5 }
+                ],
+                expectedOutputs: ["average"]
+            }
+        };
+
+        let currentTaskId = 1;
+
+        const codeInput = document.getElementById('code-input');
+        const lineNumbers = document.getElementById('line-numbers');
+        const consoleLog = document.getElementById('console-log');
+        const memoryBody = document.getElementById('memory-body');
+        const feedbackBadge = document.getElementById('feedback-badge');
+
+        function loadTask(id) {
+            currentTaskId = id;
+            document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === id - 1);
+            });
+            document.getElementById('task-title').innerHTML = tasks[id].title;
+            document.getElementById('task-desc').innerHTML = tasks[id].desc;
+            resetEditor();
+        }
+
+        function updateLineNumbers() {
+            const lines = codeInput.value.split('\n').length;
+            lineNumbers.innerHTML = Array.from({length: Math.max(lines, 5)}, (_, i) => i + 1).join('<br>');
+        }
+
+        codeInput.addEventListener('input', updateLineNumbers);
+
+        function insertKeyword(kw) {
+            const start = codeInput.selectionStart;
+            const end = codeInput.selectionEnd;
+            const text = codeInput.value;
+            
+            // Auto add newline if inserting Start/End or if cursor isn't at start of clean line
+            let prefix = "";
+            let suffix = "";
+            
+            if (start > 0 && text[start - 1] !== '\n') {
+                prefix = "\n";
+            }
+            if (kw === 'Start' || kw === 'End') {
+                suffix = "\n";
+            }
+
+            const insertedText = prefix + kw + suffix;
+            codeInput.value = text.substring(0, start) + insertedText + text.substring(end);
+            codeInput.focus();
+            
+            const newCursorPos = start + insertedText.length;
+            codeInput.selectionStart = newCursorPos;
+            codeInput.selectionEnd = newCursorPos;
+            
+            updateLineNumbers();
+        }
+
+        function resetEditor() {
+            codeInput.value = "";
+            updateLineNumbers();
+            resetConsoleAndMemory();
+            feedbackBadge.style.display = 'none';
+        }
+
+        function resetConsoleAndMemory() {
+            consoleLog.textContent = '> Program ready. Write your pseudocode and press "Run & Verify Code".';
+            memoryBody.innerHTML = '<tr><td colspan="2" style="color: var(--text-muted); text-align: center;">No variables initialized</td></tr>';
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`fs-${i}`).className = 'flow-step';
+            }
+        }
+
+        function runSimulation() {
+            resetConsoleAndMemory();
+            const rawLines = codeInput.value.split('\n');
+            const lines = rawLines.map(l => l.trim()).filter(l => l.length > 0);
+            
+            if (lines.length === 0) {
+                showFeedback(false, "Code is empty! Click keywords or type your pseudocode to begin.");
+                return;
+            }
+
+            let task = tasks[currentTaskId];
+            let memory = {};
+            let logs = [];
+            let isValid = true;
+            let errorMsg = "";
+
+            // 1. Structure Validations
+            if (lines[0].toLowerCase() !== "start") {
+                showFeedback(false, "Structure Hint: Program must begin with the keyword 'Start' on the first line.");
+                return;
+            }
+
+            if (lines[lines.length - 1].toLowerCase() !== "end") {
+                showFeedback(false, "Structure Hint: Program must end with the keyword 'End' on the last line.");
+                return;
+            }
+
+            logs.push("⚡ Executing program...");
+
+            let trackedInputs = [];
+            let trackedCalculations = [];
+            let trackedOutputs = [];
+
+            // 2. Sequential Parser
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i];
+
+                if (line.toLowerCase() === "start") {
+                    logs.push(`[Line ${i+1}] ▶ START Program execution`);
+                    document.getElementById('fs-1').classList.add('completed');
+                } 
+                else if (line.toLowerCase().startsWith("input")) {
+                    let varName = line.substring(5).trim();
+                    if (!varName) {
+                        isValid = false;
+                        errorMsg = `Syntax Error on Line ${i+1}: 'Input' must be followed by a variable name (e.g., Input userName).`;
+                        break;
+                    }
+                    
+                    let dummyValue = varName.toLowerCase().includes("name") ? '"Alice"' : (varName.includes("1") ? 80 : (varName.includes("2") ? 97 : 100));
+                    memory[varName] = dummyValue;
+                    trackedInputs.push(varName);
+                    logs.push(`[Line ${i+1}] 📥 INPUT: Stored user input into variable [${varName}]`);
+                    document.getElementById('fs-2').classList.add('completed');
+                } 
+                else if (line.toLowerCase().startsWith("set")) {
+                    let expr = line.substring(3).trim();
+                    let parts = expr.split("=");
+                    if (parts.length !== 2) {
+                        isValid = false;
+                        errorMsg = `Syntax Error on Line ${i+1}: 'Set' statement requires 'variable = expression' (e.g., Set tax = price * 0.07).`;
+                        break;
+                    }
+                    let varName = parts[0].trim();
+                    let formula = parts[1].trim().replace(/\s+/g, "");
+
+                    if (!varName || !formula) {
+                        isValid = false;
+                        errorMsg = `Syntax Error on Line ${i+1}: Missing variable or expression in 'Set' statement.`;
+                        break;
+                    }
+
+                    // Compute simulation value based on task
+                    let computedVal = 0;
+                    let targetCalc = task.expectedCalculations.find(c => c.varName.toLowerCase() === varName.toLowerCase());
+                    if (targetCalc) {
+                        computedVal = targetCalc.sampleVal;
+                    } else {
+                        computedVal = "[Calculated Value]";
+                    }
+
+                    memory[varName] = computedVal;
+                    trackedCalculations.push({ varName, formula });
+                    logs.push(`[Line ${i+1}] ⚙️ SET: Evaluated ${varName} = ${parts[1].trim()} → Value: ${computedVal}`);
+                    document.getElementById('fs-3').classList.add('completed');
+                } 
+                else if (line.toLowerCase().startsWith("output")) {
+                    let target = line.substring(6).trim();
+                    if (!target) {
+                        isValid = false;
+                        errorMsg = `Syntax Error on Line ${i+1}: 'Output' must be followed by a variable name or value.`;
+                        break;
+                    }
+                    
+                    let valToOutput = memory[target] !== undefined ? memory[target] : target;
+                    trackedOutputs.push(target);
+                    logs.push(`[Line ${i+1}] 📤 OUTPUT: Printed ${valToOutput}`);
+                    document.getElementById('fs-4').classList.add('completed');
+                } 
+                else if (line.toLowerCase() === "end") {
+                    logs.push(`[Line ${i+1}] ⏹ END Program execution completed.`);
+                    document.getElementById('fs-5').classList.add('completed');
+                } 
+                else {
+                    isValid = false;
+                    errorMsg = `Syntax Error on Line ${i+1}: Unrecognized line "${line}". Each line must begin with Start, Input, Set, Output, or End.`;
+                    break;
+                }
+            }
+
+            if (!isValid) {
+                showFeedback(false, errorMsg);
+                consoleLog.textContent = "> Execution Failed:\n" + errorMsg;
+                return;
+            }
+
+            // 3. Problem Logic Verification (Without revealing full solution)
+            // Check Inputs
+            for (let reqIn of task.expectedInputs) {
+                if (!trackedInputs.map(x => x.toLowerCase()).includes(reqIn.toLowerCase())) {
+                    showFeedback(false, `Logic Hint: You are missing required input '${reqIn}'. Use 'Input ${reqIn}'.`);
+                    consoleLog.textContent = logs.join("\n") + `\n\n[Logic Warning]: Missing input '${reqIn}'.`;
+                    return;
+                }
+            }
+
+            // Check Calculations
+            for (let reqCalc of task.expectedCalculations) {
+                let userCalc = trackedCalculations.find(c => c.varName.toLowerCase() === reqCalc.varName.toLowerCase());
+                if (!userCalc) {
+                    showFeedback(false, `Logic Hint: Missing calculation for '${reqCalc.varName}'. Use 'Set ${reqCalc.varName} = ...'.`);
+                    consoleLog.textContent = logs.join("\n") + `\n\n[Logic Warning]: Missing 'Set' expression for ${reqCalc.varName}.`;
+                    return;
+                }
+
+                let normalizedUserFormula = userCalc.formula.toLowerCase();
+                let matches = reqCalc.allowedFormulas.some(f => f.toLowerCase() === normalizedUserFormula);
+                if (!matches) {
+                    showFeedback(false, `Logic Hint: Check your formula for '${reqCalc.varName}'. Ensure mathematical operations are correct.`);
+                    consoleLog.textContent = logs.join("\n") + `\n\n[Logic Warning]: Formula for ${reqCalc.varName} needs adjustment.`;
+                    return;
+                }
+            }
+
+            // Check Outputs
+            for (let reqOut of task.expectedOutputs) {
+                if (!trackedOutputs.map(x => x.toLowerCase()).includes(reqOut.toLowerCase())) {
+                    showFeedback(false, `Logic Hint: Missing required output for '${reqOut}'. Use 'Output ${reqOut}'.`);
+                    consoleLog.textContent = logs.join("\n") + `\n\n[Logic Warning]: Missing output step for '${reqOut}'.`;
+                    return;
+                }
+            }
+
+            // All checks passed!
+            showFeedback(true, "Outstanding! Your pseudocode is syntax-correct and satisfies all challenge requirements.");
+            consoleLog.textContent = logs.join("\n");
+            
+            // Update Memory Table Display
+            if (Object.keys(memory).length === 0) {
+                memoryBody.innerHTML = '<tr><td colspan="2" style="color: var(--text-muted); text-align: center;">No variables stored</td></tr>';
+            } else {
+                memoryBody.innerHTML = Object.entries(memory).map(([k, v]) => `
+                    <tr>
+                        <td style="color: #60a5fa;">${k}</td>
+                        <td style="color: #34d399;">${v}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function showFeedback(success, msg) {
+            feedbackBadge.style.display = 'block';
+            feedbackBadge.className = 'feedback-badge ' + (success ? 'success' : 'error');
+            feedbackBadge.innerHTML = (success ? '✅ ' : '❌ ') + msg;
+        }
+
+        // Initialize empty start
+        loadTask(1);
+    </script>
+</body>
+</html>
